@@ -1,82 +1,190 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-
+// pages/login.js
+"use client";
+import useUserStore from "@store/useUserStore";
+import Head from "next/head";
+import { Input } from "@nextui-org/input";
+import { Button } from "@nextui-org/button";
+import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { NextApiRequest, NextApiResponse } from "next";
+import apiClient from "@handler/fetch/client";
 export default function LoginPage() {
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<String | null>(null);
+  const router = useRouter();
+  function getCookie(name: string): string | null {
+    const value = `; ${document.cookie}`;
+    console.log(value);
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    // 로그인 요청
+    const response = await apiClient.post("/auth/login", { email, password });
+
+    // 쿠키에서 액세스 토큰을 가져옴
+    const accessToken = response.data.token;
+    console.log("Login successful:", accessToken);
+    console.log("Login successful:", response.data);
+
+    const { id } = response.data;
+
+    
+    // // 사용자 정보 요청
+ 
+    // Zustand 스토어에 userInfo를 저장
+    const setUserInfo = useUserStore.getState().setUserInfo;
+    // const userInfoWithToken = {
+    //   ...userInfoResponse.data, // 기존 사용자 정보
+    //   token: accessToken, // 토큰 추가
+    // };
+    setUserInfo(response.data);
+
+
+
+
+    // 홈 페이지로 리다이렉트
+    router.push("/");
+  };
+
+  const handleGoogleLogin = () => {
+    router.push(
+      "https://master-of-prediction.shop:8081/oauth2/authorization/google"
+    );
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center">
-          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-2">
-            <span className="text-white text-4xl font-bold">C</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">캐시테크</h1>
+    <main className="w-full border-x border-slate-200">
+      <section className="flex flex-col items-center w-full h-screen md:flex-row">
+        <div className="relative hidden h-full bg-blue-600 lg:block lg:w-1/2 xl:w-2/3">
+          <Image
+            src="/images/login-bg.webp"
+            alt="Background Image"
+            className="object-cover w-full h-full"
+            layout="fill" // 또는 width와 height를 지정하세요.
+          />
         </div>
-        
-        <form className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <Input
-                id="id"
-                name="id"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="아이디를 입력해주세요"
-              />
-            </div>
-            <div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="패스워드를 입력해주세요"
-              />
-            </div>
-          </div>
 
-          <div>
-            <Button type="submit" className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-              로그인
+        <div className="flex items-center justify-center w-full h-full px-6 bg-white md:w-1/2 xl:w-1/3 lg:px-16 xl:px-12">
+          <div className="w-full max-w-md">
+            <Link href={"/"}>
+              <Button variant="light" size="lg" className="p-2 font-bold">
+                캐시 백{" "}
+              </Button>
+            </Link>
+            <form className="mt-6" onSubmit={handleSubmit}>
+              <div>
+                {/* <label className="block text-gray-700">Email Address</label> */}
+                <Input
+                  isRequired
+                  type="email"
+                  label="Email"
+                  autoFocus
+                  errorMessage="Please enter a valid email"
+                  autoComplete="on"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="mt-4">
+                <Input
+                  isRequired
+                  label="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              {error && <p className="mt-2 text-red-500">{error}</p>}
+              <div className="mt-2 text-right">
+                <Link
+                  href="#"
+                  className="text-sm font-semibold text-gray-700 hover:text-blue-700 focus:text-blue-700"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                className="block w-full px-4 py-3 mt-6 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-400 focus:bg-blue-400"
+              >
+                Log In
+              </Button>
+            </form>
+
+            <hr className="w-full my-6 border-gray-300" />
+
+            <Button
+              type="button"
+              className="block w-full px-4 py-3 font-semibold text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:bg-gray-100"
+              onClick={handleGoogleLogin}
+            >
+              <div className="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  viewBox="0 0 48 48"
+                >
+                  <defs>
+                    <path
+                      id="a"
+                      d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"
+                    />
+                  </defs>
+                  <clipPath id="b">
+                    <use xlinkHref="#a" overflow="visible" />
+                  </clipPath>
+                  <path clipPath="url(#b)" fill="#FBBC05" d="M0 37V11l17 13z" />
+                  <path
+                    clipPath="url(#b)"
+                    fill="#EA4335"
+                    d="M0 11l17 13 7-6.1L48 14V0H0z"
+                  />
+                  <path
+                    clipPath="url(#b)"
+                    fill="#34A853"
+                    d="M0 37l30-23 7.9 1L48 0v48H0z"
+                  />
+                  <path
+                    clipPath="url(#b)"
+                    fill="#4285F4"
+                    d="M48 48L17 24l-4-3 35-10z"
+                  />
+                </svg>
+                <span className="ml-4">Log in with Google</span>
+              </div>
             </Button>
-          </div>
-        </form>
 
-        <div>
-          <Button variant="outline" className="w-full border-green-500 text-green-500 hover:bg-green-50">
-            회원가입
-          </Button>
-        </div>
+            <p className="mt-8">
+              Need an account?
+              <Link
+                href="/signin"
+                className="font-semibold text-blue-500 hover:text-blue-700"
+              >
+                Create an account
+              </Link>
+            </p>
 
-        <div className="text-center">
-          <a href="#" className="font-medium text-green-600 hover:text-green-500">
-            아이디 비밀번호 찾기
-          </a>
-        </div>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                네이버 아이디로 간편 로그인
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <Button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#03C75A] hover:bg-[#02b350] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#03C75A]">
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.6 10.9L7.9 2.6H2.6v14.8h5.3V9.5l5.7 7.9h5.3V2.6h-5.3v8.3z"/>
-              </svg>
-              네이버로 시작하기
-            </Button>
+            <p className="mt-12 text-sm text-gray-500">
+              &copy; 2024 예측의 달인 - All Rights Reserved.
+            </p>
           </div>
         </div>
-      </div>
-    </div>
-  )
+      </section>
+    </main>
+  );
 }
