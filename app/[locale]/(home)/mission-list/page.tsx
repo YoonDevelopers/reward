@@ -21,7 +21,7 @@ export default function SmartScreen() {
 
       <main className="flex-grow p-4 space-y-4 pb-16">
         {socialApps.map((app) => (
-          <Card key={app.name}>
+          <Card key={app.name} className='cursor-pointer hover:bg-slate-400'>
             <CardBody >
                 <div className="p-4 flex justify-between items-center">
               <div className="flex items-center">
